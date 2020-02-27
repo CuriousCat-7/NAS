@@ -11,7 +11,7 @@ class FBNet_ds(datasets.ImageFolder):
   def __init__(self,
                **kwargs):
     super(FBNet_ds, self).__init__(**kwargs)
-  
+
   def filter(self,
              samples_classes=100,
              random_seed=None,
@@ -31,14 +31,14 @@ class FBNet_ds(datasets.ImageFolder):
           self.class_to_idx = _class_to_idx
           self.samples = _samples
           return
-      except Exception, e:
+      except Exception as e:
         print(e)
         pass
     _num_classes =  len(self.classes)
     if not random_seed is None:
       assert isinstance(random_seed, int)
       np.random.seed(random_seed)
-    choosen_cls_idx = list(np.random.choice(list(range(_num_classes)), 
+    choosen_cls_idx = list(np.random.choice(list(range(_num_classes)),
                                             samples_classes))
     _class_to_idx = {}
     cls_id = 0
@@ -93,8 +93,8 @@ def get_ds(args, traindir,
   """
   normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                    std=[0.229, 0.224, 0.225])
-  
-  ds_folder = FBNet_ds(root=traindir, 
+
+  ds_folder = FBNet_ds(root=traindir,
           transform=transforms.Compose([
           transforms.RandomResizedCrop(224),
           transforms.RandomHorizontalFlip(),
@@ -112,7 +112,7 @@ def get_ds(args, traindir,
     np.random.seed(random_seed)
   np.random.shuffle(indices)
   split = int(np.floor(train_portion * num_train))
-  
+
   train_queue = torch.utils.data.DataLoader(
       ds_folder, batch_size=args.batch_size,
       sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
@@ -122,5 +122,5 @@ def get_ds(args, traindir,
       ds_folder, batch_size=args.batch_size,
       sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:num_train]),
       pin_memory=True, num_workers=args.num_workers)
-  
+
   return train_queue, valid_queue, num_class

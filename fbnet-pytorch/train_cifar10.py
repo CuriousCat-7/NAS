@@ -29,7 +29,7 @@ class Config(object):
   t_beta = (0.9, 0.999)
   init_temperature = 5.0
   temperature_decay = 0.956
-  model_save_path = '/home1/nas/fbnet-pytorch/'
+  model_save_path = '/data/limingyao/model/nas/fbnet-pytorch/'
   total_epoch = 90
   start_w_epoch = 2
   train_portion = 0.8
@@ -80,7 +80,7 @@ train_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
   ])
-train_data = dset.CIFAR10(root='/home/zhouchangqing/nas/', train=True, 
+train_data = dset.CIFAR10(root='/data/limingyao/.torch/datasets', train=True,
                 download=False, transform=train_transform)
 
 num_train = len(train_data)

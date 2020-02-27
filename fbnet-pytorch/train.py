@@ -27,7 +27,7 @@ class Config(object):
   t_beta = (0.5, 0.999)
   init_temperature = 5.0
   temperature_decay = 0.956
-  model_save_path = '/mnt/data3/zcq/nas/fbnet-pytorch/'
+  model_save_path = '/data/limingyao/model/nas/fbnet-pytorch/'
   total_epoch = 90
   start_w_epoch = 10
   train_portion = 0.8

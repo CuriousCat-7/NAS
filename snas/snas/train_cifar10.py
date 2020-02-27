@@ -1,5 +1,5 @@
 import numpy as np
-import torch 
+import torch
 import torch.nn as nn
 import torch.utils
 import torch.nn.functional as F
@@ -64,7 +64,7 @@ parser.add_argument('--load-model-path', type=str, default=None,
                     help='re_train, default is None')
 
 args = parser.parse_args()
-args.model_save_path = '/home1/nas/snas/%s/' % \
+args.model_save_path = '/data/limingyao/model/nas/snas/%s/' % \
                 (time.strftime('%Y-%m-%d', time.localtime(time.time())))
 
 if not os.path.exists(args.model_save_path):
@@ -74,8 +74,8 @@ _set_file(args.model_save_path + 'log.log')
 
 config = Config()
 train_transform, valid_transform = utils._data_transforms_cifar10(config)
-train_data = dset.CIFAR10(root='../../', train=True, 
-                download=False, transform=train_transform)
+train_data = dset.CIFAR10(root="/data/limingyao/.torch/datasets",train=True,
+                download=True, transform=train_transform)
 
 train_queue = torch.utils.data.DataLoader(
   train_data, batch_size=args.batch_size,
