@@ -32,6 +32,7 @@ class Test(unittest.TestCase):
         x = torch.rand(4, 3, 64, 64)
         y = model(x)
         print("cpu" ,y.shape)
+        print("lat", model.get_lat())
 
         x = x.cuda()
         model.cuda()

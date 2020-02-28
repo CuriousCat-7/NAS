@@ -15,6 +15,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from .conv import Conv2dMetaKernel
+from .lat_ops import *
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -54,7 +55,7 @@ def conv_1x1_bn(inp, oup):
 
 
 class InvertedResidual(nn.Module):
-    def __init__(self, inp, oup, stride, expand_ratio, kernel_size):
+    def __init__(self, inp, oup, stride, expand_ratio, kernel_size, lat_fn):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
 
@@ -64,7 +65,8 @@ class InvertedResidual(nn.Module):
         if expand_ratio == 1:
             self.conv = nn.Sequential(
                 # dw
-                Conv2dMetaKernel(hidden_dim, hidden_dim, kernel_size, stride, groups=hidden_dim, bias=False),
+                Conv2dMetaKernel(hidden_dim, hidden_dim, kernel_size,
+                                 stride, groups=hidden_dim, bias=False, lat_fn=lat_fn),
                 nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
@@ -78,7 +80,8 @@ class InvertedResidual(nn.Module):
                 nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # dw
-                Conv2dMetaKernel(hidden_dim, hidden_dim, kernel_size, stride, groups=hidden_dim, bias=False),
+                Conv2dMetaKernel(hidden_dim, hidden_dim, kernel_size,
+                                 stride, groups=hidden_dim, bias=False, lat_fn=lat_fn),
                 nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
@@ -94,7 +97,7 @@ class InvertedResidual(nn.Module):
 
 
 class EDNetV2(nn.Module):
-    def __init__(self, num_classes=1000, width_mult=1., kernel_size=[3,5,7]):
+    def __init__(self, num_classes=1000, width_mult=1., kernel_size=[3,5,7], lat_fn=flops_lat_fn):
         super(EDNetV2, self).__init__()
         # setting of inverted residual blocks
         self.cfgs = [
@@ -116,7 +119,8 @@ class EDNetV2(nn.Module):
         for t, c, n, s in self.cfgs:
             output_channel = _make_divisible(c * width_mult, 4 if width_mult == 0.1 else 8)
             for i in range(n):
-                layers.append(block(input_channel, output_channel, s if i == 0 else 1, t, kernel_size=kernel_size))
+                layers.append(block(input_channel, output_channel, s if i == 0 else 1,
+                                    t, kernel_size=kernel_size, lat_fn=lat_fn))
                 input_channel = output_channel
         self.features = nn.Sequential(*layers)
         # building last several layers
@@ -146,7 +150,7 @@ class EDNetV2(nn.Module):
                     m.bias.data.zero_()
             elif isinstance(m, Conv2dMetaKernel):
                 m.tamperature = self._temperature
-                m.theta.data.normal_(0, 0.01)
+                m.theta.data.one_()
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
@@ -173,6 +177,22 @@ class EDNetV2(nn.Module):
 
         super(EDNetV2, self).eval()
 
+    def get_lat(self):
+        lat = self.base_lat
+        if self.training:
+            for m in self.modules():
+                if isinstance(m, Conv2dMetaKernel):
+                    for i in range(len(m.lat_list)):
+                        lat += m.alpha[i] * m.lat_list[i]
+        else:
+            for m in self.modules():
+                if isinstance(m, Conv2dMetaKernel):
+                    lat += m.lat_list[m.arg_theta]
+        return lat
+
+    def cal_lat_range(self, input):
+        lat = 0
+        self.training()
 
 def ednetv2(**kwargs):
     """

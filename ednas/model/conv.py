@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from data_parallel import DataParallel
+from .lat_ops import flops_lat_fn
 
 _pair = torch.nn.modules.utils._pair
 
@@ -14,7 +15,8 @@ class Conv2dMetaKernel(nn.Module):
                  stride=1,
                  groups=1,
                  bias=True,
-                 temperature_start=5.0):
+                 temperature_start=5.0,
+                 lat_fn=flops_lat_fn): #TODO
         super(Conv2dMetaKernel, self).__init__()
         kernel_size.sort()
         self.assert_kernel(kernel_size)
@@ -22,6 +24,7 @@ class Conv2dMetaKernel(nn.Module):
         max_k = kernel_size[-1]
         self.range_hs = []
         self.range_ws = []
+        self.lat_fn = lat_fn
 
         for k in kernel_size:
             self.conv_list.append(
@@ -47,6 +50,7 @@ class Conv2dMetaKernel(nn.Module):
         self.padding = self.conv_list[-1].padding
         self.groups = self.conv_list[-1].groups
         self.dilation = self.conv_list[-1].dilation
+        self.lat_list = []
 
     def assert_kernel(self, kernel_size):
         assert isinstance(kernel_size, list)
@@ -57,10 +61,10 @@ class Conv2dMetaKernel(nn.Module):
 
     def forward(self, input):
         if self.training:
-            theta = F.gumbel_softmax(self.theta, tau=self.temperature, hard=False)
+            self.alpha = F.gumbel_softmax(self.theta, tau=self.temperature, hard=False)
             weight = torch.zeros_like(self.weight_list[-1])
             for idx in range(len(self.weight_list)):
-                cur_weight = self.weight_list[idx] * theta[idx]
+                cur_weight = self.weight_list[idx] * self.alpha[idx]
                 range_h = self.range_hs[idx]
                 range_w = self.range_ws[idx]
                 weight[:,
@@ -70,13 +74,19 @@ class Conv2dMetaKernel(nn.Module):
             if self.bias_list:
                 bias = torch.zeros_like(self.bias_list[-1])
                 for idx in range(len(self.bias_list)):
-                    bias += self.bias_list[idx] * theta[idx]
+                    bias += self.bias_list[idx] * self.alpha[idx]
             else:
                 bias = None
+            if not self.lat_list:
+                self.update_lat_list(input.shape)
+
             return F.conv2d(input, weight, bias, self.stride,
                             self.padding, self.dilation, self.groups)
         else:
             return self.conv_list[self.arg_theta](input)
+
+    def update_lat_list(self, input_shape):
+        self.lat_list = [self.lat_fn(conv, input_shape[1:]) for conv in self.conv_list]
 
     def eval(self):
         self.arg_theta = self.theta.max(0)[1]
