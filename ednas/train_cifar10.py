@@ -8,12 +8,11 @@ import argparse
 import time
 import os
 
-from model import EDNet
+from model import EDNetV2 as EDNet
 from trainer import Trainer
 from data import get_ds
 from utils import _logger, _set_file
 from torch.utils.data.sampler import SubsetRandomSampler
-
 
 class Config(object):
   num_cls_used = 0
@@ -21,18 +20,23 @@ class Config(object):
   alpha = 0.2
   beta = 0.6
   speed_f = './speed_cpu.txt'
-  w_lr = 0.1
+  w_lr = 0.65 #0.1
   w_mom = 0.9
-  w_wd = 1e-4
+  w_wd = 3e-5 #1e-4
   t_lr = 0.01
   t_wd = 5e-4
   t_beta = (0.9, 0.999)
   init_temperature = 5.0
   temperature_decay = 0.956
-  model_save_path = '/data/limingyao/model/nas/fbnet-pytorch/'
+  model_save_path = '/data/limingyao/model/nas/ednas/'
   total_epoch = 90
   start_w_epoch = 2
   train_portion = 0.8
+  width_mult = 0.75
+  kernel_size = [3, 5, 7]
+  target_lat = 260e3
+  valid_interval = 1
+
 
 lr_scheduler_params = {
   'logger' : _logger,
@@ -93,7 +97,7 @@ train_queue = torch.utils.data.DataLoader(
   pin_memory=True, num_workers=16)
 
 val_queue = torch.utils.data.DataLoader(
-  valid_data, batch_size=args.batch_size,
+  train_data, batch_size=args.batch_size,
   sampler=SubsetRandomSampler(indices[split:]),
   pin_memory=True, num_workers=8)
 

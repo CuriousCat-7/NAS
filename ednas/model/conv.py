@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from data_parallel import DataParallel
 from .lat_ops import flops_lat_fn
 
 _pair = torch.nn.modules.utils._pair
