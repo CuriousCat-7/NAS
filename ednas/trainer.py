@@ -227,7 +227,7 @@ class Trainer(object):
           acc = self.valid(train_t_ds)
           arg_thetas = self._mod.module.get_arg_theta()
           if max(self._valid_acc) < acc:
-            self.save(name=f"EP{epoch}_ACC{acc*100}", arg_thetas)
+            self.save(f"EP{epoch}_ACC{acc*100}", arg_thetas)
           self._valid_acc.append(acc)
           self.logger.info(f"arg_thetas are:\n {arg_thetas}")
           self.logger.info(f"acc curve {self._valid_acc[1:]}")
@@ -247,7 +247,7 @@ class Trainer(object):
     acc = float(correct) / total_num
     return acc
 
-    def save(self, name=None, arg_thetas:list):
+    def save(self, name, arg_thetas:list):
       path = f"{self.model_save_path}/{name}"
       ModelTools.save_model(self._mod, path+".pth")
       with open(path+".txt", "w") as f:
