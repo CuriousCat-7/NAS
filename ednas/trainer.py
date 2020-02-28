@@ -247,9 +247,9 @@ class Trainer(object):
     acc = float(correct) / total_num
     return acc
 
-    def save(self, name, arg_thetas:list):
-      path = f"{self.model_save_path}/{name}"
-      ModelTools.save_model(self._mod, path+".pth")
-      with open(path+".txt", "w") as f:
-          f.write("arg_thetas:\n")
-          f.write(arg_thetas)
+  def save(self, name, arg_thetas:list):
+    path = f"{self.model_save_path}/{name}"
+    ModelTools.save_model(self._mod, path+".pth")
+    with open(path+".txt", "w") as f:
+        f.write("arg_thetas:\n")
+        f.write(arg_thetas)
