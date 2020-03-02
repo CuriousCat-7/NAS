@@ -22,6 +22,19 @@ class ModelTools(object):
                                              loc: storage))
         return model
 
+    @staticmethod
+    def load_model(model, resume):
+        data_parallel = Dist.is_parallel(model)
+        m = model
+        if data_parallel:
+            m = model.module
+        device = next(m.parameters()).device
+        m.load_state_dict(
+            torch.load(
+                resume,
+                map_location=device))
+        return model
+
     @classmethod
     def weights_to_cpu(cls, state_dict):
         """Copy a model state_dict to cpu.

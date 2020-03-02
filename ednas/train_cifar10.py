@@ -12,6 +12,7 @@ from model import EDNetV2 as EDNet
 from trainer import Trainer
 from data import get_ds
 from utils import _logger, _set_file
+from utils import ModelTools
 from torch.utils.data.sampler import SubsetRandomSampler
 
 class Config(object):
@@ -20,7 +21,7 @@ class Config(object):
   alpha = 0.2
   beta = 0.6
   speed_f = './speed_cpu.txt'
-  w_lr = 0.65 #0.1
+  w_lr = 0.001 #0.65 #0.1
   w_mom = 0.9
   w_wd = 3e-5 #1e-4
   t_lr = 0.01
@@ -29,7 +30,7 @@ class Config(object):
   init_temperature = 5.0
   temperature_decay = 0.956
   model_save_path = '/data/limingyao/model/nas/ednas/'
-  total_epoch = 90
+  total_epoch = 250
   start_w_epoch = 2
   train_portion = 0.8
   width_mult = 0.75
@@ -102,6 +103,8 @@ val_queue = torch.utils.data.DataLoader(
   pin_memory=True, num_workers=8)
 
 model = EDNet(num_classes=config.num_cls_used if config.num_cls_used > 0 else 10,)
+if args.load_model_path is not None:
+    ModelTools.load_model(model, args.load_model_path)
 
 trainer = Trainer(network=model,
                   w_lr=config.w_lr,

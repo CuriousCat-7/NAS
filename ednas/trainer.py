@@ -252,4 +252,4 @@ class Trainer(object):
     ModelTools.save_model(self._mod, path+".pth")
     with open(path+".txt", "w") as f:
         f.write("arg_thetas:\n")
-        f.write(arg_thetas)
+        f.write(str(arg_thetas))
