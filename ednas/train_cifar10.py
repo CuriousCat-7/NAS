@@ -12,7 +12,7 @@ from model import EDNetV2 as EDNet
 from trainer import Trainer
 from data import get_ds
 from utils import _logger, _set_file
-from utils import ModelTools
+from my_utils import ModelTools
 from torch.utils.data.sampler import SubsetRandomSampler
 
 class Config(object):
