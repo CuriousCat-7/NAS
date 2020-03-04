@@ -13,7 +13,8 @@ import argparse
 
 from snas import SNAS, Trainer
 from utils import _set_file, _logger
-import utils
+from my_utils import ModelTools
+
 
 class Config(object):
   init_channels = 16
@@ -84,6 +85,9 @@ train_queue = torch.utils.data.DataLoader(
 model = SNAS(C=config.init_channels,
              num_classes=10,
              layers=config.stacked_cell)
+
+if args.load_model_path is not None:
+    ModelTools.load_model(model, args.load_model_path)
 
 trainer = Trainer(network=model,
                   w_lr=config.w_lr,
